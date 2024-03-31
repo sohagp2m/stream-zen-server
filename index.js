@@ -14,6 +14,14 @@ const createToken = (userInfo, grant) => {
   at.addGrant(grant);
   return at.toJwt();
 };
+
+const createBroadcast = (identity, grant) => {
+  console.log(apiKey, apiSecret);
+  const at = new AccessToken(apiKey, apiSecret, { identity: identity });
+  at.addGrant(grant);
+  return at.toJwt();
+};
+
 app.use(cors());
 // const roomPattern = /\w{4}\-\w{4}/;
 
@@ -109,21 +117,18 @@ app.get("/admin/get-token", async (req, res) => {
 // broadcast token generate in host
 app.get("/broadcast/host-token", async (req, res) => {
   try {
-    const { roomName, identity, name } = req.query;
-    if (typeof identity !== "string" || typeof roomName !== "string") {
+    const { identity } = req.query;
+    if (typeof identity !== "string") {
       return res.status(403).end();
     }
-    if (Array.isArray(name)) {
-      throw new Error("provide max one name");
-    }
     const grant = {
-      room: roomName,
+      room: identity,
       roomJoin: true,
       canPublish: true,
       canPublishData: true,
     };
 
-    const token = await createToken({ identity, name }, grant);
+    const token = await createBroadcast(identity, grant);
     const result = {
       identity,
       accessToken: token,
@@ -137,13 +142,11 @@ app.get("/broadcast/host-token", async (req, res) => {
 // broadcast token in users
 app.get("/broadcast/user-token", async (req, res) => {
   try {
-    const { roomName, identity, name } = req.query;
+    const { roomName, identity } = req.query;
     if (typeof identity !== "string" || typeof roomName !== "string") {
       return res.status(403).end();
     }
-    if (Array.isArray(name)) {
-      throw new Error("provide max one name");
-    }
+
     const grant = {
       room: roomName,
       roomJoin: true,
@@ -151,7 +154,7 @@ app.get("/broadcast/user-token", async (req, res) => {
       canPublishData: true,
     };
 
-    const token = await createToken({ identity, name }, grant);
+    const token = await createBroadcast(identity, grant);
     console.log(token);
     const result = {
       identity,
